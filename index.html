@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Lines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+/* Layout: one screen. Tilted test strip across the top two thirds (top-right → lower-left), fingerprint scanner in the bottom third. Light pastel only. */
+:root{
+  color-scheme: light;
+  --bg:#FFF6F3;
+  --ink:#3B2E4A;
+  --ink-soft:#7D7090;
+  --pink:#F49BBE;
+  --line:#E0457B;
+  --lilac:#CDBDF4;
+  --mint:#BDEBDB;
+  --peach:#FFD6C2;
+  --sky:#C3E0FA;
+  --butter:#FFF0B8;
+  --boy:#5FA8E8;
+  --girl:#F0749F;
+  --glass:rgba(255,255,255,.72);
+  --f-display:"Unbounded","Manrope",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);overflow:hidden;-webkit-tap-highlight-color:transparent;}
+.app{position:fixed;inset:0;overflow:hidden;}
+
+/* ---------- animated pastel background ---------- */
+.bg{position:absolute;inset:0;overflow:hidden;z-index:0;}
+.blob{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(70px);opacity:.75;
+  transition:background-color 1.6s ease;animation:drift 22s ease-in-out infinite alternate;}
+.b1{background-color:var(--peach);left:-18vmax;top:-20vmax;}
+.b2{background-color:var(--lilac);right:-22vmax;top:-10vmax;animation-duration:26s;animation-delay:-6s;}
+.b3{background-color:var(--mint);left:-14vmax;bottom:-26vmax;animation-duration:30s;animation-delay:-12s;}
+.b4{background-color:var(--sky);right:-20vmax;bottom:-24vmax;animation-duration:24s;animation-delay:-3s;}
+.b5{background-color:var(--butter);left:30%;top:30%;width:40vmax;height:40vmax;opacity:.55;animation-duration:34s;}
+@keyframes drift{
+  0%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(8vmax,6vmax) scale(1.12);}
+  66%{transform:translate(-6vmax,10vmax) scale(.94);}
+  100%{transform:translate(5vmax,-7vmax) scale(1.06);}
+}
+body[data-g="boy"] .b1{background-color:#CFE6FB;}
+body[data-g="boy"] .b2{background-color:#B7D8F7;}
+body[data-g="boy"] .b5{background-color:#DDF0FF;}
+body[data-g="girl"] .b2{background-color:#FBC6DA;}
+body[data-g="girl"] .b4{background-color:#FFD0E1;}
+body[data-g="girl"] .b5{background-color:#FFE3EE;}
+.floaty{position:absolute;bottom:-40px;opacity:0;animation:rise linear infinite;}
+@keyframes rise{
+  0%{transform:translate(0,0) rotate(0);opacity:0;}
+  10%{opacity:.8;}
+  90%{opacity:.6;}
+  100%{transform:translate(var(--dx),-115vh) rotate(var(--rot));opacity:0;}
+}
+
+/* ---------- header ---------- */
+.brand{position:absolute;left:max(16px,4vw);top:max(16px,3.2vh);z-index:3;display:flex;flex-direction:column;gap:4px;max-width:46vw;}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(18px,3.4vh,30px);line-height:1.05;letter-spacing:-.01em;text-wrap:balance;}
+.brand h1 span{color:var(--line);}
+.brand p{margin:0;color:var(--ink-soft);font-size:clamp(11px,1.6vh,14px);letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+/* ---------- strip ---------- */
+.strip-pos{position:absolute;z-index:2;transform-origin:50% 50%;will-change:transform;}
+.strip-shake{width:100%;height:100%;will-change:transform;}
+.strip-shake.live{transition:none;}
+.strip-shake svg{width:100%;height:100%;display:block;overflow:visible;}
+#iWait circle{animation:dot 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+#iWait circle:nth-child(2){animation-delay:.15s}
+#iWait circle:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,100%{transform:scale(.6);opacity:.4}50%{transform:scale(1.15);opacity:1}}
+.ind{opacity:0;transform:scale(.3);transform-box:fill-box;transform-origin:center;transition:opacity .35s ease,transform .55s cubic-bezier(.3,1.7,.5,1);}
+.ind.on{opacity:1;transform:scale(1);}
+#iQ.on{animation:qpulse 1s ease-in-out infinite;}
+@keyframes qpulse{50%{transform:scale(1.18)}}
+
+.badge{position:absolute;z-index:4;transform:translate(-50%,-50%) scale(.4) rotate(-6deg);opacity:0;pointer-events:none;
+  background:#fff;color:var(--line);font-family:var(--f-display);font-weight:700;font-size:clamp(12px,1.9vh,17px);letter-spacing:.08em;
+  padding:.55em 1em;border-radius:999px;box-shadow:0 10px 30px rgba(224,69,123,.25),0 0 0 3px rgba(244,155,190,.45);
+  transition:opacity .35s ease,transform .6s cubic-bezier(.3,1.7,.5,1);white-space:nowrap;}
+.badge.on{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-6deg);}
+.badge small{display:block;font-family:var(--f-body);font-weight:600;color:var(--ink-soft);letter-spacing:.02em;font-size:.72em;margin-top:2px;text-align:center;}
+
+/* ---------- bottom: scanner ---------- */
+.bottom{position:absolute;left:0;right:0;top:66%;bottom:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.6vh,16px);padding:0 16px max(26px,env(safe-area-inset-bottom,0px));}
+.scanner{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.4vh,14px);transition:opacity .5s ease,transform .5s ease;}
+.scanner.gone{opacity:0;transform:translateY(20px) scale(.9);pointer-events:none;}
+.fp-btn{--s:clamp(104px,17vh,168px);position:relative;width:var(--s);height:var(--s);border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#fff,rgba(255,255,255,.75) 60%,rgba(255,255,255,.55));
+  box-shadow:0 14px 40px rgba(120,90,160,.22),inset 0 -6px 14px rgba(205,189,244,.35),inset 0 4px 10px #fff;
+  transition:transform .2s ease,box-shadow .3s ease;}
+.fp-btn:hover{transform:translateY(-2px) scale(1.02);}
+.fp-btn:active{transform:scale(.95);}
+.fp-btn:focus-visible{outline:3px solid var(--line);outline-offset:6px;}
+.fp-btn[disabled]{cursor:default;}
+.fp-btn .halo{position:absolute;inset:-10px;border-radius:50%;border:2px solid var(--pink);opacity:0;animation:halo 2.4s ease-out infinite;}
+.fp-btn .halo:nth-child(2){animation-delay:1.2s;}
+.fp-btn.busy .halo{animation:none;opacity:0;}
+@keyframes halo{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+.fp-btn svg.fp{position:absolute;left:19%;top:14%;width:62%;height:72%;overflow:visible;}
+.fp-btn svg.ring{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);transform:rotate(-90deg);}
+.status{font-weight:700;font-size:clamp(13px,1.9vh,16px);text-align:center;min-height:1.4em;color:var(--ink);font-variant-numeric:tabular-nums;}
+.status .soft{color:var(--ink-soft);font-weight:600;}
+.legal{position:absolute;left:0;right:0;bottom:max(8px,env(safe-area-inset-bottom,0px));text-align:center;font-size:10.5px;color:var(--ink-soft);opacity:.8;padding:0 16px;z-index:3;}
+
+/* ---------- reveal card ---------- */
+.card{position:absolute;left:50%;top:50%;transform:translate(-50%,-40%) scale(.85);opacity:0;pointer-events:none;
+  width:min(360px,calc(100vw - 32px));padding:clamp(14px,2.4vh,22px) 20px;border-radius:28px;text-align:center;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 20px 60px rgba(90,60,120,.18),0 0 0 1px rgba(255,255,255,.9) inset;
+  transition:opacity .5s ease,transform .7s cubic-bezier(.3,1.5,.5,1);display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.1vh,10px);}
+.card.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto;}
+.card .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink-soft);}
+.card h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(26px,4.6vh,40px);line-height:1;color:var(--c,var(--line));}
+.card p{margin:0;font-size:14px;color:var(--ink-soft);}
+.again{margin-top:4px;border:0;cursor:pointer;font:700 14px var(--f-body);color:#fff;background:var(--c,var(--line));padding:11px 22px;border-radius:999px;
+  box-shadow:0 8px 20px rgba(90,60,120,.18);transition:transform .2s ease;}
+.again:hover{transform:translateY(-2px);}
+.again:focus-visible{outline:3px solid var(--ink);outline-offset:3px;}
+
+
+/* ---------- gender stickers ---------- */
+.stickers{position:absolute;inset:0;z-index:4;pointer-events:none;}
+.stk{position:absolute;width:var(--w);transform:translate(-50%,-50%) rotate(var(--r)) scale(0);opacity:0;
+  filter:drop-shadow(0 6px 10px rgba(90,60,120,.18));animation:pop .6s cubic-bezier(.3,1.7,.5,1) forwards,bob 3.2s ease-in-out infinite;animation-delay:var(--d),calc(var(--d) + .6s);}
+.stk svg{display:block;width:100%;height:auto;}
+@keyframes pop{to{transform:translate(-50%,-50%) rotate(var(--r)) scale(1);opacity:1;}}
+@keyframes bob{0%,100%{transform:translate(-50%,-50%) rotate(var(--r)) scale(1);opacity:1;}50%{transform:translate(-50%,calc(-50% - 6px)) rotate(calc(var(--r) + 4deg)) scale(1.04);opacity:1;}}
+.stickers.out .stk{transition:opacity .3s;opacity:0!important;}
+canvas#fx{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;}
+
+@media (prefers-reduced-motion: reduce){
+  .blob,.floaty,.fp-btn .halo{animation:none!important;}
+}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="app" id="app">
+  <div class="bg" aria-hidden="true">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div><div class="blob b5"></div>
+  </div>
+
+
+  <!-- ===== the test strip ===== -->
+  <div class="strip-pos" id="stripPos" aria-hidden="true">
+    <div class="strip-shake" id="stripShake">
+      <svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#fbf7fc"/><stop offset="1" stop-color="#e9e0f0"/>
+          </linearGradient>
+          <linearGradient id="gCap" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e3d7fb"/><stop offset=".5" stop-color="#cbb9f3"/><stop offset="1" stop-color="#ad97e6"/>
+          </linearGradient>
+          <linearGradient id="gWick" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1e9fa"/>
+          </linearGradient>
+          <pattern id="pFiber" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+            <line x1="0" y1="0" x2="0" y2="9" stroke="#e4d8f5" stroke-width="3"/>
+          </pattern>
+          <linearGradient id="gDye" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#f49bbe" stop-opacity="0"/><stop offset=".75" stop-color="#f49bbe" stop-opacity=".6"/><stop offset="1" stop-color="#e0457b" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gLine" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f06a9a"/><stop offset=".5" stop-color="#df3f77"/><stop offset="1" stop-color="#f06a9a"/>
+          </linearGradient>
+          <radialGradient id="gDot" cx=".4" cy=".35" r=".8">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#efe7f5"/>
+          </radialGradient>
+          <clipPath id="cWin"><rect x="400" y="84" width="290" height="52" rx="26"/></clipPath>
+          <clipPath id="cDot"><circle cx="772" cy="110" r="31"/></clipPath>
+          <filter id="fShadow" x="-10%" y="-40%" width="120%" height="190%"><feGaussianBlur stdDeviation="12"/></filter>
+          <filter id="fGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+
+        <!-- soft shadow -->
+        <rect x="40" y="70" width="930" height="140" rx="70" fill="#5a3c78" opacity=".2" filter="url(#fShadow)"/>
+
+        <!-- absorbent wick -->
+        <path d="M210 60 H72 Q24 60 24 110 Q24 160 72 160 H210 Z" fill="url(#gWick)" stroke="#dccff0" stroke-width="2"/>
+        <path d="M210 60 H72 Q24 60 24 110 Q24 160 72 160 H210 Z" fill="url(#pFiber)" opacity=".75"/>
+        <path d="M60 72 Q40 82 38 108" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9"/>
+
+        <!-- body -->
+        <path d="M240 30 H900 A80 80 0 0 1 900 190 H240 Z" fill="url(#gBody)" stroke="#e0d5ea" stroke-width="2"/>
+        <path d="M262 45 H900 A65 65 0 0 1 955 76" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M262 180 H900 A70 70 0 0 0 962 140" stroke="#d9cde6" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+
+        <!-- cap band -->
+        <rect x="196" y="36" width="66" height="148" rx="18" fill="url(#gCap)"/>
+        <rect x="204" y="44" width="50" height="10" rx="5" fill="#fff" opacity=".55"/>
+        <g stroke="#a48ddf" stroke-width="3" stroke-linecap="round" opacity=".6">
+          <line x1="216" y1="70" x2="216" y2="150"/><line x1="229" y1="70" x2="229" y2="150"/><line x1="242" y1="70" x2="242" y2="150"/>
+        </g>
+
+        <!-- MAX arrow + embossed info -->
+        <g fill="#b9a9cb" font-family="Manrope, system-ui, sans-serif" font-weight="700">
+          <path d="M282 64 l14 -8 v16 z"/>
+          <text x="302" y="70" font-size="15" letter-spacing="2">MAX</text>
+          <text x="282" y="122" font-size="34" font-family="Unbounded, Manrope, sans-serif" fill="#cdbfdb">hCG</text>
+          <text x="283" y="150" font-size="15" letter-spacing=".5">10 mIU/ml</text>
+          <text x="545" y="178" font-size="13" letter-spacing="4" text-anchor="middle" fill="#c4b6d2">TWO LINES</text>
+        </g>
+
+        <!-- result window -->
+        <g fill="#a897ba" font-family="Unbounded, Manrope, sans-serif" font-weight="700" font-size="17" text-anchor="middle">
+          <text x="510" y="70">T</text><text x="590" y="70">C</text>
+        </g>
+        <rect x="390" y="75" width="310" height="70" rx="35" fill="#e8dfef"/>
+        <rect x="400" y="84" width="290" height="52" rx="26" fill="#fdfbf8" stroke="#d6cae2" stroke-width="2"/>
+        <g clip-path="url(#cWin)">
+          <rect id="wash" x="400" y="84" width="0" height="52" fill="#f49bbe" opacity=".22"/>
+          <rect id="dye" x="280" y="84" width="130" height="52" fill="url(#gDye)" opacity="0"/>
+          <rect id="lnT" x="503" y="84" width="14" height="52" fill="url(#gLine)" opacity="0"/>
+          <rect id="lnC" x="583" y="84" width="14" height="52" fill="url(#gLine)" opacity="0"/>
+          <rect x="400" y="84" width="290" height="9" fill="#5a3c78" opacity=".06"/>
+        </g>
+        <path d="M425 90 H660" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+
+        <!-- round indicator -->
+        <circle cx="772" cy="110" r="41" fill="#e8dfef"/>
+        <circle cx="772" cy="110" r="32" fill="url(#gDot)" stroke="#d6cae2" stroke-width="2"/>
+        <g clip-path="url(#cDot)"><g id="indRot">
+          <g id="iWait" class="ind">
+            <circle cx="756" cy="110" r="5" fill="#cdbdf4"/><circle cx="772" cy="110" r="5" fill="#f49bbe"/><circle cx="788" cy="110" r="5" fill="#bdebdb"/>
+          </g>
+          <g id="iPlus" class="ind" filter="url(#fGlow)">
+            <rect x="766" y="90" width="12" height="40" rx="6" fill="#e0457b"/><rect x="752" y="104" width="40" height="12" rx="6" fill="#e0457b"/>
+          </g>
+          <g id="iQ" class="ind">
+            <text x="772" y="123" text-anchor="middle" font-family="Unbounded, Manrope, sans-serif" font-weight="700" font-size="36" fill="#a48ddf">?</text>
+          </g>
+          <g id="iBoy" class="ind">
+            <circle cx="772" cy="110" r="32" fill="#5fa8e8"/>
+            <circle cx="767" cy="115" r="10" fill="none" stroke="#fff" stroke-width="4.5"/>
+            <path d="M774 108 L786 96 M777 96 H786 V105" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <g id="iGirl" class="ind">
+            <circle cx="772" cy="110" r="32" fill="#f0749f"/>
+            <circle cx="772" cy="104" r="10" fill="none" stroke="#fff" stroke-width="4.5"/>
+            <path d="M772 114 V130 M764 123 H780" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+        </g></g>
+
+        <!-- thumb grip -->
+        <g fill="#f1eaf5" stroke="#dcd1e6" stroke-width="2">
+          <rect x="846" y="72" width="7" height="76" rx="3.5"/><rect x="862" y="70" width="7" height="80" rx="3.5"/>
+          <rect x="878" y="70" width="7" height="80" rx="3.5"/><rect x="894" y="70" width="7" height="80" rx="3.5"/>
+          <rect x="910" y="72" width="7" height="76" rx="3.5"/><rect x="926" y="76" width="7" height="68" rx="3.5"/>
+          <rect x="942" y="82" width="7" height="56" rx="3.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="badge" id="badge">POSITIVE<small>2 lines · hCG detected</small></div>
+
+  <!-- ===== bottom: fingerprint ===== -->
+  <section class="bottom">
+    <div class="scanner" id="scanner">
+      <button class="fp-btn" id="fpBtn" type="button" aria-label="Start the test: tap the fingerprint">
+        <span class="halo"></span><span class="halo"></span>
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="47" fill="none" stroke="#ece3f3" stroke-width="2.5"/>
+          <circle id="ring" cx="50" cy="50" r="47" fill="none" stroke="url(#gRing)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="295.3" stroke-dashoffset="295.3"/>
+          <defs><linearGradient id="gRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cdbdf4"/><stop offset="1" stop-color="#e0457b"/></linearGradient></defs>
+        </svg>
+        <svg class="fp" id="fp" viewBox="0 0 200 240" aria-hidden="true">
+          <defs>
+            <linearGradient id="gFp" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#a48ddf"/><stop offset=".55" stop-color="#e5609a"/><stop offset="1" stop-color="#f7a5c4"/>
+            </linearGradient>
+            <clipPath id="cOval"><ellipse cx="100" cy="120" rx="80" ry="106"/></clipPath>
+            <clipPath id="cScan"><rect id="scanClip" x="-10" y="250" width="220" height="0"/></clipPath>
+            <filter id="fFpGlow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <linearGradient id="gScanLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#e0457b" stop-opacity="0"/><stop offset=".5" stop-color="#e0457b"/><stop offset="1" stop-color="#e0457b" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g clip-path="url(#cOval)"><g id="fpBase" fill="none" stroke="#cbbfdc" stroke-width="3.6" stroke-linecap="round"></g>
+          <g id="fpLit" fill="none" stroke="url(#gFp)" stroke-width="3.8" stroke-linecap="round" clip-path="url(#cScan)" filter="url(#fFpGlow)"></g></g>
+          <g id="scanLine" opacity="0">
+            <rect x="-6" y="-14" width="212" height="28" fill="#f49bbe" opacity=".18"/>
+            <rect x="-6" y="-1.5" width="212" height="3" rx="1.5" fill="url(#gScanLine)"/>
+          </g>
+        </svg>
+      </button>
+      <div class="status" id="status" aria-live="polite">Place your finger <span class="soft">· tap the fingerprint</span></div>
+    </div>
+
+    <div class="card" id="card" role="dialog" aria-live="polite">
+      <div class="eyebrow">Positive · it’s a</div>
+      <h2 id="gTitle">Boy!</h2>
+      <p id="gSub">Congratulations! Two lines and a blue surprise.</p>
+    </div>
+  </section>
+
+  <div class="stickers" id="stickers" aria-hidden="true"></div>
+  <canvas id="fx"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const app = $('app'), stripPos = $('stripPos'), shake = $('stripShake'), badge = $('badge');
+  const fpBtn = $('fpBtn'), status = $('status'), ring = $('ring'), scanner = $('scanner'), card = $('card');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 400) : ms));
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+
+  /* ---------- floating hearts & bubbles ---------- */
+  const bg = document.querySelector('.bg');
+  const heart = c => `<svg width="100%" height="100%" viewBox="0 0 24 22"><path d="M12 21s-9-5.6-9-12A5 5 0 0 1 12 6a5 5 0 0 1 9 3c0 6.4-9 12-9 12z" fill="${c}"/></svg>`;
+  const cols = ['#F7B6CF','#CDBDF4','#BDEBDB','#FFD6C2','#C3E0FA','#FFE7A6'];
+  for (let i = 0; i < 16; i++) {
+    const el = document.createElement('div');
+    el.className = 'floaty';
+    const s = 10 + Math.random()*22, c = cols[i % cols.length];
+    el.style.cssText = `left:${Math.random()*100}%;width:${s}px;height:${s}px;animation-duration:${14+Math.random()*16}s;animation-delay:${-Math.random()*30}s;--dx:${(Math.random()-.5)*30}vw;--rot:${(Math.random()-.5)*120}deg`;
+    el.innerHTML = i % 3 ? `<div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,${c} 70%);opacity:.8"></div>` : heart(c);
+    bg.appendChild(el);
+  }
+
+  /* ---------- fingerprint: loop-pattern ridges = smooth isolines of a distance field ---------- */
+  // core line: hairpin head at the centre, curving out to the lower-left like a real "loop" print
+  const core = [];
+  for (let i = 0; i <= 40; i++) {
+    const t = i / 40;
+    core.push([104 - 150*t*t - 20*t, 92 + 70*t + 70*t*t]);
+  }
+  const distCore = (x, y) => {
+    let best = 1e9;
+    for (let i = 0; i < core.length - 1; i++) {
+      const [ax, ay] = core[i], [bx, by] = core[i+1];
+      const vx = bx-ax, vy = by-ay, wx = x-ax, wy = y-ay;
+      const t = Math.max(0, Math.min(1, (wx*vx + wy*vy) / (vx*vx + vy*vy)));
+      const dx = wx - t*vx, dy = wy - t*vy, d = dx*dx + dy*dy;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  };
+  const GS = 1.5, GW = Math.ceil(200/GS) + 1, GH = Math.ceil(240/GS) + 1, vals = new Float64Array(GW*GH);
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+    let x = i*GS, y = j*GS;
+    // gentle organic flow, smooth so ridges never cross
+    const wx = x + 3.2*Math.sin(y*.045 + .6) + 1.6*Math.sin(y*.11 + x*.03);
+    const wy = y + 2.6*Math.sin(x*.05 + 1.3) + 1.4*Math.cos(x*.09 - y*.04);
+    // ridges a bit tighter towards the top of the finger
+    vals[j*GW + i] = distCore(wx, wy) * (1 + .12*Math.max(0, (110 - y)/110));
+  }
+  const levels = d3.range(3, 190, 6.8);
+  const contours = d3.contours().size([GW, GH]).smooth(true).thresholds(levels)(Array.from(vals));
+  const toPath = d3.geoPath(d3.geoIdentity().scale(GS));
+  let paths = contours.map(c => `<path d="${toPath(c)}"/>`).join('') + '<ellipse cx="100" cy="120" rx="78" ry="104"/>';
+  $('fpBase').innerHTML = paths; $('fpLit').innerHTML = paths;
+
+  /* ---------- layout: tilted strip in top 2/3 ---------- */
+  let geo = {};
+  function layout() {
+    const W = app.clientWidth, H = app.clientHeight;
+    const p1 = {x: W*.88, y: H*.08}, p2 = {x: W*.12, y: H*.575};
+    const dx = p1.x - p2.x, dy = p2.y - p1.y;
+    const dist = Math.hypot(dx, dy);
+    const ang = Math.atan2(dy, dx);              // radians, strip rises to the right
+    const L = Math.min(dist * .98, H * .95, 1150);
+    const T = L * .22;
+    const c = {x: (p1.x + p2.x)/2, y: (p1.y + p2.y)/2 + T*.08};
+    Object.assign(stripPos.style, {width: L+'px', height: T+'px', left: (c.x - L/2)+'px', top: (c.y - T/2)+'px', transform: `rotate(${-ang}rad)`});
+    // badge: below-right of the result window, perpendicular to the strip
+    const along = (545/1000 - .5) * L;
+    const u = {x: Math.cos(ang), y: -Math.sin(ang)}, n = {x: Math.sin(ang), y: Math.cos(ang)};
+    const off = T * (W < 700 ? 1.55 : 1.05);
+    let bx = c.x + u.x*along + n.x*off, by = c.y + u.y*along + n.y*off;
+    const bw = badge.offsetWidth / 2 + 14;
+    bx = clamp(bx, bw, W - bw); by = clamp(by, 60, H*.62);
+    document.getElementById('indRot').setAttribute('transform', `rotate(${(ang*180/Math.PI).toFixed(2)} 772 110)`);
+    badge.style.left = bx + 'px'; badge.style.top = by + 'px';
+    geo = {L, T, W, H};
+    geo.win = {x: c.x + u.x*along, y: c.y + u.y*along, x2: c.x + u.x*((772/1000 - .5)*L), y2: c.y + u.y*((772/1000 - .5)*L), bx, by};
+    fx.width = W * devicePixelRatio; fx.height = H * devicePixelRatio;
+  }
+  const fx = $('fx'), ctx = fx.getContext('2d');
+  addEventListener('resize', layout);
+  layout();
+  if (document.fonts) document.fonts.ready.then(layout);
+
+  /* ---------- helpers ---------- */
+  const ind = id => ['iWait','iPlus','iQ','iBoy','iGirl'].forEach(k => $(k).classList.toggle('on', k === id));
+  const anim = (ms, fn) => new Promise(res => {
+    if (reduce) ms = Math.min(ms, 600);
+    const t0 = performance.now();
+    const step = now => { const t = clamp((now - t0) / ms); fn(t); t < 1 ? requestAnimationFrame(step) : res(); };
+    requestAnimationFrame(step);
+  });
+  const setStatus = html => status.innerHTML = html;
+  const scanClip = $('scanClip'), scanLine = $('scanLine');
+  const wash = $('wash'), dye = $('dye'), lnT = $('lnT'), lnC = $('lnC');
+
+  function resetAll() {
+    delete document.body.dataset.g;
+    ind(null);
+    badge.classList.remove('on');
+    card.classList.remove('on');
+    scanner.classList.remove('gone');
+    fpBtn.disabled = false; fpBtn.classList.remove('busy');
+    ring.style.strokeDashoffset = 295.3;
+    scanClip.setAttribute('y', 250); scanClip.setAttribute('height', 0);
+    scanLine.setAttribute('opacity', 0);
+    wash.setAttribute('width', 0); wash.setAttribute('opacity', .22);
+    dye.setAttribute('opacity', 0);
+    lnT.setAttribute('opacity', 0); lnC.setAttribute('opacity', 0);
+    shake.style.transform = '';
+    clearStickers();
+    setStatus('Place your finger <span class="soft">· tap the fingerprint</span>');
+  }
+
+  /* ---------- sequence ---------- */
+  let running = false, revealed = false;
+  async function run() {
+    if (running) return; running = true;
+    fpBtn.disabled = true; fpBtn.classList.add('busy');
+    try { navigator.vibrate && navigator.vibrate(30); } catch (e) {}
+
+    // 1. fingerprint scan
+    scanLine.setAttribute('opacity', 1);
+    await anim(2300, t => {
+      const up = clamp(t / .62), down = clamp((t - .62) / .38);
+      const y = t < .62 ? 238 - ease(up) * 240 : -2 + ease(down) * 240;
+      scanLine.setAttribute('transform', `translate(0 ${y})`);
+      const top = t < .62 ? y : -10;
+      scanClip.setAttribute('y', top); scanClip.setAttribute('height', 260 - top);
+      scanLine.setAttribute('opacity', t > .9 ? (1 - t) * 10 : 1);
+      ring.style.strokeDashoffset = 295.3 * (1 - t);
+      setStatus(`Scanning <span class="soft">${Math.round(t*100)}%</span>`);
+    });
+    setStatus('Fingerprint accepted <span class="soft">· test activated</span>');
+    await sleep(450);
+
+    // 2. shaking test + dye flow
+    ind('iWait');
+    shake.classList.add('live');
+    setStatus('Analyzing hCG <span class="soft">· please wait</span>');
+    const A = geo.T * .085, DUR = 5200;
+    dye.setAttribute('opacity', 1);
+    await anim(DUR, t => {
+      // gentle rocking around the strip's centre axis, easing back to centre
+      const k = t < .18 ? ease(t/.18) : t > .78 ? 1 - ease((t-.78)/.22) : 1;
+      const s = t * DUR / 1000;
+      const ph = 2*Math.PI*1.6*s;
+      const r = k * 3.4 * Math.sin(ph);
+      const x = k * A * .18 * Math.sin(ph * .5);
+      const y = k * A * .1 * Math.sin(ph + Math.PI/2);
+      shake.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) rotate(${r.toFixed(2)}deg)`;
+      // dye front travels from wick side (T) to C
+      const p = clamp(t / .82);
+      const front = 380 + ease(p) * 340;
+      dye.setAttribute('x', front - 130);
+      wash.setAttribute('width', Math.max(0, front - 400));
+      lnT.setAttribute('opacity', clamp((p - .42) / .3).toFixed(3));
+      lnC.setAttribute('opacity', clamp((p - .62) / .25).toFixed(3));
+      if (t > .82) { wash.setAttribute('opacity', (.22 * (1 - (t-.82)/.18)).toFixed(3)); dye.setAttribute('opacity', (1 - (t-.82)/.18).toFixed(3)); }
+      if (t > .3 && t < .32) setStatus('Analyzing hCG <span class="soft">· line T appearing</span>');
+    });
+    shake.classList.remove('live');
+    shake.style.transform = '';
+    lnT.setAttribute('opacity', 1); lnC.setAttribute('opacity', 1);
+
+    // 3. positive
+    await sleep(250);
+    ind('iPlus');
+    badge.classList.add('on');
+    try { navigator.vibrate && navigator.vibrate([40, 60, 40]); } catch (e) {}
+    setStatus('Result: <span style="color:var(--line)">positive</span>');
+    burst(['#F49BBE','#CDBDF4','#FFD6C2','#BDEBDB','#E0457B'], 70);
+    await sleep(1700);
+
+    // 4. gender reveal
+    ind('iQ');
+    setStatus('Who’s in there? <span class="soft">· detecting the sex</span>');
+    await sleep(1600);
+    const boy = Math.random() < .5;
+    ind(boy ? 'iBoy' : 'iGirl');
+    document.body.dataset.g = boy ? 'boy' : 'girl';
+    scanner.classList.add('gone');
+    $('gTitle').textContent = boy ? 'Boy!' : 'Girl!';
+    $('gSub').textContent = boy ? 'Congratulations! Two lines and a blue surprise.' : 'Congratulations! Two lines and a pink surprise.';
+    card.style.setProperty('--c', boy ? 'var(--boy)' : 'var(--girl)');
+    card.classList.add('on');
+    stickers(boy);
+    setTimeout(() => { revealed = true; }, 900);
+    burst(boy ? ['#5FA8E8','#9CCBF3','#C3E0FA','#FFFFFF','#BDEBDB'] : ['#F0749F','#F7B6CF','#FFD0E1','#FFFFFF','#CDBDF4'], 180, true);
+    running = false;
+  }
+  fpBtn.addEventListener('click', run);
+  // restart: tap anywhere once the result is shown
+  app.addEventListener('click', e => { if (revealed && !e.target.closest('#fpBtn')) { revealed = false; resetAll(); } });
+
+
+  /* ---------- gender stickers all over the screen ---------- */
+  const stkBox = $('stickers');
+  function clearStickers() { stkBox.innerHTML = ''; }
+  function stickerSVG(type, boy) {
+    const c = boy ? '#5FA8E8' : '#F0749F', l = boy ? '#C9E3FA' : '#FFD3E3', word = boy ? 'BOY' : 'GIRL';
+    const F = 'font-family="Unbounded, Manrope, sans-serif" font-weight="700"';
+    const sym = (x, y, sc, col) => boy
+      ? `<g transform="translate(${x} ${y}) scale(${sc})" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="-4" cy="4" r="11"/><path d="M4 -4 L16 -16 M7 -16 H16 V-7"/></g>`
+      : `<g transform="translate(${x} ${y}) scale(${sc})" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round"><circle cx="0" cy="-6" r="11"/><path d="M0 5 V21 M-8 14 H8"/></g>`;
+    switch (type) {
+      case 0: return `<svg viewBox="0 0 200 80"><rect x="4" y="4" width="192" height="72" rx="36" fill="#fff"/><rect x="11" y="11" width="178" height="58" rx="29" fill="${c}"/><text x="100" y="50" text-anchor="middle" ${F} font-size="${boy ? 22 : 21}" fill="#fff">IT’S A ${word}!</text></svg>`;
+      case 1: return `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#fff"/><circle cx="50" cy="50" r="40" fill="${l}"/>${sym(50, 52, 1.6, c)}</svg>`;
+      case 2: return `<svg viewBox="0 0 110 100"><path d="M55 95s-50-28-50-62A26 26 0 0 1 55 20a26 26 0 0 1 50 13c0 34-50 62-50 62z" fill="#fff"/><path d="M55 84S14 60 14 34A18 18 0 0 1 55 27a18 18 0 0 1 41 7c0 26-41 50-41 50z" fill="${c}"/><text x="55" y="58" text-anchor="middle" ${F} font-size="${boy ? 20 : 17}" fill="#fff">${word}</text></svg>`;
+      case 3: { const pts = Array.from({length: 20}, (_, i) => { const a = i*Math.PI/10 - Math.PI/2, r = i % 2 ? 36 : 48; return (55 + r*Math.cos(a)).toFixed(1) + ',' + (55 + r*Math.sin(a)).toFixed(1); }).join(' ');
+        const pts2 = Array.from({length: 20}, (_, i) => { const a = i*Math.PI/10 - Math.PI/2, r = i % 2 ? 30 : 41; return (55 + r*Math.cos(a)).toFixed(1) + ',' + (55 + r*Math.sin(a)).toFixed(1); }).join(' ');
+        return `<svg viewBox="0 0 110 110"><polygon points="${pts}" fill="#fff" stroke="#fff" stroke-width="6" stroke-linejoin="round"/><polygon points="${pts2}" fill="${l}"/>${sym(55, 57, 1.25, c)}</svg>`; }
+      default: return `<svg viewBox="0 0 150 70"><rect x="4" y="4" width="142" height="62" rx="16" fill="#fff"/><rect x="10" y="10" width="130" height="50" rx="11" fill="${l}"/><text x="75" y="44" text-anchor="middle" ${F} font-size="${boy ? 26 : 24}" fill="${c}">${word}</text></svg>`;
+    }
+  }
+  function stickers(boy) {
+    clearStickers();
+    const {W, H} = geo, cols = W < 700 ? 3 : 5, rows = W < 700 ? 6 : 4;
+    const base = Math.min(W, H) * (W < 700 ? .26 : .17);
+    const cells = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push([c, r]);
+    cells.sort(() => Math.random() - .5);
+    const keep = [[geo.win.x, geo.win.y, geo.T*1.1], [geo.win.x2, geo.win.y2, geo.T*.6], [geo.win.bx, geo.win.by, geo.T*.9]];
+    let i = 0;
+    cells.forEach(([c, r]) => {
+      const type = i % 5;
+      const el = document.createElement('div');
+      el.className = 'stk';
+      const w = base * (type === 0 ? 1.5 : type === 4 ? 1.15 : .85) * (.85 + Math.random()*.3);
+      const x = (c + .5 + (Math.random() - .5)*.55) / cols * W;
+      const y = (r + .5 + (Math.random() - .5)*.5) / rows * H;
+      if (keep.some(([kx, ky, kr]) => Math.hypot(x - kx, y - ky) < kr + w*.45)) return;
+      i++;
+      el.style.cssText = `left:${x}px;top:${y}px;--w:${w}px;--r:${((Math.random() - .5)*36).toFixed(1)}deg;--d:${(i*.07).toFixed(2)}s`;
+      el.innerHTML = stickerSVG(type, boy);
+      stkBox.appendChild(el);
+    });
+  }
+
+  /* ---------- confetti ---------- */
+  let parts = [], raf = 0;
+  function burst(colors, n, big) {
+    if (reduce) return;
+    const {W, H} = geo;
+    for (let i = 0; i < n; i++) {
+      const fromTop = big && i % 2;
+      parts.push({
+        x: fromTop ? Math.random()*W : W/2 + (Math.random()-.5)*60,
+        y: fromTop ? -20 - Math.random()*H*.3 : H*.4,
+        vx: fromTop ? (Math.random()-.5)*2 : (Math.random()-.5)*14,
+        vy: fromTop ? 1 + Math.random()*2 : -6 - Math.random()*9,
+        s: 5 + Math.random()*7, r: Math.random()*6, vr: (Math.random()-.5)*.3,
+        c: colors[i % colors.length], shape: i % 4, life: 0
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    const dpr = devicePixelRatio, {W, H} = geo;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    parts = parts.filter(p => p.y < H + 30 && p.life < 600);
+    for (const p of parts) {
+      p.life++; p.vy += .22; p.vx *= .985; p.vy = Math.min(p.vy, 5.5);
+      p.x += p.vx + Math.sin(p.life/12)*.6; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      ctx.strokeStyle = 'rgba(90,60,120,.12)'; ctx.lineWidth = 1;
+      if (p.shape === 0) { ctx.beginPath(); ctx.arc(0, 0, p.s/2, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (p.shape === 1) { const s = p.s*.9; ctx.beginPath(); ctx.moveTo(0, s*.35); ctx.bezierCurveTo(-s, -s*.4, -s*.3, -s, 0, -s*.35); ctx.bezierCurveTo(s*.3, -s, s, -s*.4, 0, s*.35); ctx.fill(); }
+      else { ctx.fillRect(-p.s/2, -p.s/4, p.s, p.s/2); ctx.strokeRect(-p.s/2, -p.s/4, p.s, p.s/2); }
+      ctx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(tick) : (ctx.clearRect(0, 0, W, H), 0);
+  }
+})();
+</script>
+</body>
+</html>
